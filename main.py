@@ -1,6 +1,5 @@
 import re
 from enum import Enum, auto
-from abc import ABC
 
 
 # List of different token types
@@ -57,12 +56,12 @@ class Scanner:
         if expression == "":
             return []
 
-        regex = re.compile("\s*(=>|[-+*\/\%=\(\)]|[A-Za-z_][A-Za-z0-9_]*|[0-9]*\.?[0-9]+)\s*")
+        regex = re.compile("\s*(=>|[-+*/%=()]|[A-Za-z_][A-Za-z0-9_]*|[0-9]*\.?[0-9]+)\s*")
         tokens = regex.findall(expression)
         # print([s for s in tokens if not s.isspace()])
         return [s for s in tokens if not s.isspace()]
 
-    def addToken(self, type: TokenType, value: str, literal) -> None:
+    def addToken(self, type: TokenType, value: str | float, literal) -> None:
         self._tokenList.append(Token(type=type, lexeme=value, literal=literal))
 
     def lexer(self, expression: str):
@@ -161,7 +160,7 @@ class Unary(Expr):
 
 # Object for Literals (i.e. [0-9])
 class Literal(Expr):
-    def __init__(self, value: str | int | float):
+    def __init__(self, value: str | int | float | None):
         self.value = value
 
     def accept(self, visitor):
@@ -192,7 +191,9 @@ class ParseError(Exception):
 
 # Parses the list of Tokens -> AST in order
 class Parser:
-    def __init__(self, tokens: list = [], current: int = 0):
+    def __init__(self, tokens=None, current: int = 0):
+        if tokens is None:
+            tokens = []
         self.tokens = tokens
         self.current = current
 
@@ -242,7 +243,7 @@ class Parser:
         if (self.isAtEnd()):
             return ''
         # print("CALLS EXPRESSION")
-        return self.equality();
+        return self.equality()
 
     # equality       → comparison ( ( "!=" | "==" ) comparison )*
     def equality(self):
@@ -432,7 +433,7 @@ class Interpreter(ExprVisitor):
     def isTruthy(self, value):
         if (value == None):
             return False
-        if (isinstance(value, boolean)):
+        if (isinstance(value, bool)):
             return value
         return True
 
